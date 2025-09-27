@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Cancelled</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .cancelled-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 2rem;
+            background: #ff9800;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 1.5s ease-out infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .cancelled-icon::after {
+            content: '⏸';
+            color: white;
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        h1 {
+            color: #ff9800;
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            font-weight: 300;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .details {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .detail-value {
+            color: #6c757d;
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            background: #ff9800;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .info-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .info-box h3 {
+            color: #e65100;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .info-box p {
+            color: #424242;
+            line-height: 1.5;
+            margin-bottom: 0.5rem;
+        }
+
+        .action-buttons {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #2196f3;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1976d2;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #ff9800;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #f57000;
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #2196f3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 2rem 1.5rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="cancelled-icon"></div>
+
+    <h1>Payment Cancelled</h1>
+    <p class="subtitle">You cancelled the payment process. No charges were made to your account.</p>
+
+    <div class="details">
+        <div class="detail-item">
+            <span class="detail-label">Payment ID:</span>
+            <span class="detail-value" id="payment-id">Loading...</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Booking ID:</span>
+            <span class="detail-value" id="booking-id">Loading...</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Status:</span>
+            <span class="status-badge" id="status">CANCELLED</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Cancellation Time:</span>
+            <span class="detail-value" id="cancellation-time">Loading...</span>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <h3>What happened?</h3>
+        <p>You chose to cancel the payment process before completing it. This is completely normal and no payment has been processed.</p>
+        <p>We welcome you back when you will feal ready to book again.With Best regards!</p>
+    </div>
+
+    <div class="action-buttons">
+        <button class="btn btn-primary" onclick="retryPayment()">
+            <span class="loading hidden" id="loading"></span>
+            <span id="retry-btn-text">Redirect to Website</span>
+        </button>
+        <a href="#" class="btn btn-warning" onclick="goToBookings()">View My Bookings</a>
+    </div>
+</div>
+
+<script>
+    // Get URL parameters
+    function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        const results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+    // Initialize page with URL parameters
+    function initializePage() {
+        const paymentId = getUrlParameter('paymentId');
+        const bookingId = getUrlParameter('bookingId');
+        const error = getUrlParameter('error');
+
+        document.getElementById('payment-id').textContent = paymentId || 'N/A';
+        document.getElementById('booking-id').textContent = bookingId || 'N/A';
+        document.getElementById('status').textContent = 'CANCELLED';
+        document.getElementById('cancellation-time').textContent = new Date().toLocaleString();
+
+        // Show error message if present
+        if (error) {
+            const infoBox = document.querySelector('.info-box');
+            infoBox.innerHTML = `
+                    <h3>Cancellation Error</h3>
+                    <p style="color: #d32f2f; background: #ffebee; padding: 0.5rem; border-radius: 4px;">${error}</p>
+                    <p>Despite the error, your payment was cancelled and no charges were made.</p>
+                `;
+        }
+    }
+
+    // Retry payment
+    function retryPayment() {
+        const bookingId = getUrlParameter('bookingId');
+
+        if (!bookingId) {
+            alert('No booking information found. Please start a new booking.');
+            return;
+        }
+
+        const loading = document.getElementById('loading');
+        const btnText = document.getElementById('retry-btn-text');
+
+        loading.classList.remove('hidden');
+        btnText.textContent = 'Redirecting...';
+
+        // Simulate redirect to payment page
+        setTimeout(() => {
+            loading.classList.add('hidden');
+            btnText.textContent = 'Complete Payment';
+
+            // In a real app, this would redirect to the payment page
+            alert(`Redirecting to payment page for booking ${bookingId}...`);
+            // window.location.href = `/payment/new?bookingId=${bookingId}`;
+        }, 1500);
+    }
+
+    // Check payment status via API
+    async function checkPaymentStatus() {
+        const paymentId = getUrlParameter('paymentId');
+        if (!paymentId) {
+            alert('No payment ID found');
+            return;
+        }
+
+        try {
+            // Replace with your actual API endpoint
+            const response = await fetch(`/api/payments/paypal/status/${paymentId}`);
+
+            if (response.ok) {
+                const payment = await response.json();
+
+                // Update the display with fresh data
+                document.getElementById('payment-id').textContent = payment.paymentId || paymentId;
+                document.getElementById('booking-id').textContent = payment.bookingId || 'N/A';
+                document.getElementById('status').textContent = payment.paymentStatus || 'CANCELLED';
+
+                // Check if status changed
+                if (payment.paymentStatus === 'COMPLETED') {
+                    alert('Payment status has changed to COMPLETED! Redirecting to success page...');
+                    window.location.href = `/payment/success.html?paymentId=${paymentId}&status=${payment.paymentStatus}&bookingId=${payment.bookingId}`;
+                } else if (payment.paymentStatus === 'PENDING') {
+                    alert('Payment is now PENDING. Please wait for completion.');
+                    document.getElementById('status').textContent = 'PENDING';
+                    document.getElementById('status').style.background = '#2196f3';
+                }
+
+                console.log('Payment status updated:', payment);
+            } else {
+                throw new Error('Failed to fetch payment status');
+            }
+        } catch (error) {
+            console.error('Error checking payment status:', error);
+            alert('Could not check payment status. Please try again.');
+        }
+    }
+
+    function goToBookings() {
+        // Replace with your actual bookings page URL
+        alert('Redirecting to bookings page...');
+        // window.location.href = '/bookings';
+    }
+
+    // Initialize page when DOM loads
+    document.addEventListener('DOMContentLoaded', initializePage);
+
+    // Log all URL parameters for debugging
+    console.log('Cancelled Page Parameters:', {
+        paymentId: getUrlParameter('paymentId'),
+        bookingId: getUrlParameter('bookingId'),
+        error: getUrlParameter('error')
+    });
+</script>
+</body>
+</html>

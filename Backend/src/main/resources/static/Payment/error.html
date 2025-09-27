@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Failed</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 2rem;
+            background: #ff4757;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: shake 0.6s ease-out 0.3s both;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .error-icon::after {
+            content: '✗';
+            color: white;
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        h1 {
+            color: #ff4757;
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            font-weight: 300;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .error-details {
+            background: #fff5f5;
+            border-left: 4px solid #ff4757;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .error-code {
+            font-family: monospace;
+            background: #fed7d7;
+            color: #c53030;
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            word-break: break-all;
+            font-size: 0.9rem;
+        }
+
+        .details {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .detail-value {
+            color: #6c757d;
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            background: #ff4757;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .suggestions {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .suggestions h3 {
+            color: #1976d2;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .suggestions ul {
+            color: #424242;
+            padding-left: 1.5rem;
+        }
+
+        .suggestions li {
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .action-buttons {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #2196f3;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1976d2;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #ff4757;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ff3742;
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #2196f3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 2rem 1.5rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="error-icon"></div>
+
+    <h1>Payment Failed</h1>
+    <p class="subtitle">We're sorry, but your payment could not be processed at this time.</p>
+
+    <div class="error-details">
+        <strong>Error Details:</strong>
+        <div class="error-code" id="error-message">Loading error details...</div>
+    </div>
+
+    <div class="details">
+        <div class="detail-item">
+            <span class="detail-label">Payment ID:</span>
+            <span class="detail-value" id="payment-id">Loading...</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Booking ID:</span>
+            <span class="detail-value" id="booking-id">Loading...</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Status:</span>
+            <span class="status-badge" id="status">FAILED</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Attempt Time:</span>
+            <span class="detail-value" id="attempt-time">Loading...</span>
+        </div>
+    </div>
+
+    <div class="suggestions">
+        <h3>What you can do:</h3>
+        <ul>
+            <li>Check your payment method details and try again</li>
+            <li>Ensure you have sufficient funds in your account</li>
+            <li>Try using a different payment method</li>
+            <li>Contact your bank if the problem persists</li>
+            <li>Reach out to our support team for assistance</li>
+        </ul>
+    </div>
+
+    <div class="action-buttons">
+        <button class="btn btn-primary" onclick="retryPayment()">
+            <span class="loading hidden" id="loading"></span>
+            <span id="retry-btn-text">Try Again</span>
+        </button>
+        <button class="btn btn-secondary" onclick="checkPaymentStatus()">Check Status</button>
+        <a href="#" class="btn btn-danger" onclick="contactSupport()">Contact Support</a>
+    </div>
+</div>
+
+<script>
+    // Get URL parameters
+    function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        const results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+    // Initialize page with URL parameters
+    function initializePage() {
+        const paymentId = getUrlParameter('paymentId');
+        const bookingId = getUrlParameter('bookingId');
+        const error = getUrlParameter('error');
+        const status = getUrlParameter('status');
+
+        document.getElementById('payment-id').textContent = paymentId || 'N/A';
+        document.getElementById('booking-id').textContent = bookingId || 'N/A';
+        document.getElementById('status').textContent = status || 'FAILED';
+        document.getElementById('attempt-time').textContent = new Date().toLocaleString();
+
+        // Display error message
+        if (error) {
+            document.getElementById('error-message').textContent = error;
+        } else {
+            document.getElementById('error-message').textContent = 'Payment processing failed. Please try again.';
+        }
+
+        // Update status badge color
+        const statusBadge = document.getElementById('status');
+        if (status === 'CANCELLED') {
+            statusBadge.textContent = 'CANCELLED';
+            statusBadge.style.background = '#ff9800';
+            document.querySelector('h1').textContent = 'Payment Cancelled';
+            document.querySelector('.subtitle').textContent = 'Your payment was cancelled. You can try again whenever you\'re ready.';
+            document.querySelector('.error-icon').style.background = '#ff9800';
+        }
+    }
+
+    // Retry payment
+    function retryPayment() {
+        const paymentId = getUrlParameter('paymentId');
+        const bookingId = getUrlParameter('bookingId');
+
+        if (!bookingId) {
+            alert('No booking information found. Please start a new booking.');
+            return;
+        }
+
+        const loading = document.getElementById('loading');
+        const btnText = document.getElementById('retry-btn-text');
+
+        loading.classList.remove('hidden');
+        btnText.textContent = 'Processing...';
+
+        // Simulate retry process
+        setTimeout(() => {
+            loading.classList.add('hidden');
+            btnText.textContent = 'Try Again';
+
+            // In a real app, this would redirect to the payment page
+            alert('Redirecting to payment page...');
+            // window.location.href = `/payment/new?bookingId=${bookingId}`;
+        }, 2000);
+    }
+
+    // Check payment status via API
+    async function checkPaymentStatus() {
+        const paymentId = getUrlParameter('paymentId');
+        if (!paymentId) {
+            alert('No payment ID found');
+            return;
+        }
+
+        try {
+            // Replace with your actual API endpoint
+            const response = await fetch(`/api/payments/paypal/status/${paymentId}`);
+
+            if (response.ok) {
+                const payment = await response.json();
+
+                // Update the display with fresh data
+                document.getElementById('payment-id').textContent = payment.paymentId || paymentId;
+                document.getElementById('booking-id').textContent = payment.bookingId || 'N/A';
+                document.getElementById('status').textContent = payment.paymentStatus || 'FAILED';
+
+                // Check if status changed to success
+                if (payment.paymentStatus === 'COMPLETED') {
+                    alert('Payment status has changed to COMPLETED! Redirecting to success page...');
+                    window.location.href = `/payment/success?paymentId=${paymentId}&status=${payment.paymentStatus}&bookingId=${payment.bookingId}`;
+                }
+
+                console.log('Payment status updated:', payment);
+            } else {
+                throw new Error('Failed to fetch payment status');
+            }
+        } catch (error) {
+            console.error('Error checking payment status:', error);
+            alert('Could not check payment status. Please try again.');
+        }
+    }
+
+    function contactSupport() {
+        const paymentId = getUrlParameter('paymentId');
+        const error = getUrlParameter('error');
+
+        // Create support email with payment details
+        const subject = `Payment Issue - ID: ${paymentId}`;
+        const body = `Hello Support Team,
+
+I encountered an issue with my payment:
+
+Payment ID: ${paymentId}
+Booking ID: ${getUrlParameter('bookingId')}
+Error: ${error || 'Payment failed'}
+Time: ${new Date().toLocaleString()}
+
+Please help me resolve this issue.
+
+Thank you.`;
+
+        const mailtoLink = `mailto:support@yourcompany.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.location.href = mailtoLink;
+    }
+
+    // Initialize page when DOM loads
+    document.addEventListener('DOMContentLoaded', initializePage);
+
+    // Log all URL parameters for debugging
+    console.log('Error Page Parameters:', {
+        paymentId: getUrlParameter('paymentId'),
+        bookingId: getUrlParameter('bookingId'),
+        error: getUrlParameter('error'),
+        status: getUrlParameter('status')
+    });
+</script>
+</body>
+</html>
