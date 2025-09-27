@@ -1,1 +1,20 @@
+# Ignore all IntelliJ project files
+.idea/
+backend/.idea/
+
+# Ignore environment files with secrets
 .env
+
+# Ignore Docker volumes (optional)
+volumes/
+
+# Ignore backend build output (redundant, safe)
+backend/target/
+backend/build/
+
+# Ignore any logs
+*.log
+
+# VS Code
+.vscode/
+
