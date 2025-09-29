@@ -15,12 +15,24 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
 public class PayPalPaymentService implements PaymentProviderService {
 
     private final PayPalHttpClient payPalClient;
+
+    private static final Set<String> SUPPORTED_CURRENCIES = Set.of("USD", "EUR", "GBP", "AUD", "CAD", "JPY");
+
+    private void validateCurrency(String currency) {
+        if (!SUPPORTED_CURRENCIES.contains(currency.toUpperCase())) {
+            throw new UnsupportedCurrencyException(currency);
+        }
+    }
+    public static Set<String> getSupportedCurrencies() {
+        return SUPPORTED_CURRENCIES;
+    }
 
     @Value("${app.base-url}")
     private String baseUrl;
@@ -32,6 +44,8 @@ public class PayPalPaymentService implements PaymentProviderService {
     @Override
     public PaymentRedirectDTO processPayment(Payment payment) {
         log.info("Processing PayPal payment for bookingId: {}", payment.getBookingId());
+
+        validateCurrency(payment.getCurrency().name());
 
         String returnUrl = baseUrl + "/api/payments/paypal/success?paymentId=" + payment.getPaymentId();
         String cancelUrl = baseUrl + "/api/payments/paypal/cancel?paymentId=" + payment.getPaymentId();
@@ -60,7 +74,7 @@ public class PayPalPaymentService implements PaymentProviderService {
         );
 
         try {
-            HttpResponse<Order> response = payPalClient.execute(request);
+            HttpResponse<Order> response = executeWithRetry(request);
             Order order = response.result();
 
             // Save the PayPal order ID
@@ -131,7 +145,21 @@ public class PayPalPaymentService implements PaymentProviderService {
         OrdersCaptureRequest request = new OrdersCaptureRequest(paypalOrderId);
         request.requestBody(new OrderRequest());
 
-        HttpResponse<Order> response = payPalClient.execute(request);
+        HttpResponse<Order> response = executeWithRetry(request);
         return response.result();
+    }
+
+    private <T> HttpResponse<T> executeWithRetry(com.paypal.http.HttpRequest<T> request) throws IOException {
+        int attempts = 0;
+        while (attempts < 3) {
+            try {
+                return payPalClient.execute(request);
+            } catch (IOException e) {
+                attempts++;
+                log.warn("Retrying PayPal request, attempt {}", attempts);
+                if (attempts == 3) throw e;
+            }
+        }
+        throw new IOException("Failed to execute PayPal request after retries");
     }
 }

@@ -5,10 +5,12 @@ import Projet.Microservice.DTO.PaymentRedirectDTO;
 import Projet.Microservice.DTO.PaymentResponseDTO;
 import Projet.Microservice.Entities.Currency;
 import Projet.Microservice.Entities.Payment;
+import Projet.Microservice.Entities.PaymentMethod;
 import Projet.Microservice.Entities.PaymentStatus;
 import Projet.Microservice.Exceptions.BookingAlreadyPaidException;
 import Projet.Microservice.Exceptions.PaymentNotFoundException;
 import Projet.Microservice.Exceptions.PaymentStatusException;
+import Projet.Microservice.Exceptions.UnsupportedCurrencyException;
 import Projet.Microservice.Repositories.PaymentRepository;
 import Projet.Microservice.Services.PaymentProviders.PaymentProviderFactory;
 import Projet.Microservice.Services.PaymentProviders.PaymentProviderService;
@@ -24,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +38,7 @@ public class PaymentService {
     private final PaymentProviderFactory providerFactory;
     private final PayPalPaymentService payPalPaymentService;
 
+
     // CREATE a new payment
     @Transactional
     public PaymentResponseDTO createPayment(CreatePaymentRequestDTO request) {
@@ -42,6 +46,20 @@ public class PaymentService {
 
         if (paymentRepository.existsByBookingId(request.getBookingId())) {
             throw new BookingAlreadyPaidException(request.getBookingId());
+        }
+
+        // Prevent creating a new payment if the user has pending/created payments
+        if (paymentRepository.existsByUserIdAndPaymentStatusIn(
+                request.getUserId(),
+                List.of(PaymentStatus.CREATED, PaymentStatus.PENDING))) {
+            throw new PaymentStatusException(
+                    "You already have a pending payment. Please complete it before creating a new one.");
+        }
+
+        // Check if the selected payment method is available for the chosen currency
+        List<PaymentMethod> availableMethods = providerFactory.getAvailableMethods(request.getCurrency().name());
+        if (!availableMethods.contains(request.getPaymentMethod())) {
+            throw new UnsupportedCurrencyException(request.getCurrency().name());
         }
 
         Payment payment = Payment.builder()
@@ -62,6 +80,7 @@ public class PaymentService {
 
         return mapToResponseDTO(payment);
     }
+
 
 @Transactional
 public PaymentRedirectDTO initiatePayment(String paymentId) {

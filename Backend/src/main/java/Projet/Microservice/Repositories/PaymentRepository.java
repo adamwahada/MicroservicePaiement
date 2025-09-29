@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,6 +29,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findByPaymentStatusInAndCreatedAtBefore(
             List<PaymentStatus> statuses, Instant createdBefore);
     List<Payment> findByPaymentStatusAndCreatedAtBefore(PaymentStatus status, Instant createdBefore);
+    boolean existsByUserIdAndPaymentStatusIn(String userId, Collection<PaymentStatus> paymentStatus);
+
 
 
     // Provider integration queries - Essential for webhooks

@@ -5,5 +5,6 @@ public enum Currency {
     EUR,
     TND,
     GBP,
-    JPY
+    JPY,
+    CAD
 }

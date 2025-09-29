@@ -20,7 +20,7 @@ public class PaymentExpiryService {
     private final PaymentRepository paymentRepository;
 
     private static final long EXPIRY_MINUTES = 15;
-    private static final long DELETION_DAYS = 3;
+    private static final long DELETION_DAYS = 2;
 
     // Run every minute: expire old payments
     @Scheduled(fixedRate = 60_000)
@@ -43,7 +43,7 @@ public class PaymentExpiryService {
         }
     }
 
-    @Scheduled(cron = "0 0 3 * * ?")
+    @Scheduled(cron = "0 0 2 * * ?")
     public void deleteOldExpiredPayments() {
         Instant deletionThreshold = Instant.now().minus(DELETION_DAYS, ChronoUnit.DAYS);
 
