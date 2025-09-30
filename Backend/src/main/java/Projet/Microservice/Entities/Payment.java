@@ -1,5 +1,6 @@
 package Projet.Microservice.Entities;
 
+import Projet.Microservice.Entities.UserEntities.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,9 +22,6 @@ public class Payment extends BaseEntity {
 
     @Column(name = "booking_id", nullable = false,unique = true)
     private String bookingId;
-
-    @Column(name = "user_id", nullable = false)
-    private String userId;
 
     @Column(name = "amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
@@ -64,4 +62,8 @@ public class Payment extends BaseEntity {
 
     @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Refund> refunds;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 }

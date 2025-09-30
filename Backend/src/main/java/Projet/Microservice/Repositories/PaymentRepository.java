@@ -19,34 +19,45 @@ import java.util.Optional;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
+    // Booking queries
     boolean existsByBookingId(String bookingId);
-
-    // Basic finders - Perfect as they are!
     Optional<Payment> findByPaymentId(String paymentId);
     List<Payment> findByBookingId(String bookingId);
-    Page<Payment> findByUserIdOrderByCreatedAtDesc(String userId, Pageable pageable);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM Payment p WHERE p.bookingId = :bookingId AND p.paymentStatus IN :successStatuses")
+    boolean existsByBookingIdAndSuccessfulStatus(
+            @Param("bookingId") String bookingId,
+            @Param("successStatuses") List<PaymentStatus> successStatuses);
+
+    // User-based queries (using Long userId via relationship)
+    Page<Payment> findByUser_IdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+    boolean existsByUser_IdAndPaymentStatusIn(Long userId, Collection<PaymentStatus> paymentStatus);
+
+    @Query("SELECT COUNT(p) FROM Payment p WHERE p.user.id = :userId AND p.paymentStatus = :status")
+    long countByUserIdAndStatus(@Param("userId") Long userId, @Param("status") PaymentStatus status);
+
+    @Query("SELECT p FROM Payment p WHERE p.user.id = :userId AND p.paymentStatus IN :successStatuses ORDER BY p.createdAt DESC")
+    List<Payment> findSuccessfulPaymentsByUserId(
+            @Param("userId") Long userId,
+            @Param("successStatuses") List<PaymentStatus> successStatuses);
+
+    @Query("SELECT COALESCE(SUM(p.amountInUSD), 0) FROM Payment p WHERE p.user.id = :userId AND p.paymentStatus IN :successStatuses")
+    BigDecimal getTotalSpentByUser(@Param("userId") Long userId,
+                                   @Param("successStatuses") List<PaymentStatus> successStatuses);
+
+    @Query("SELECT p FROM Payment p WHERE p.user.id = :userId ORDER BY p.createdAt DESC LIMIT :limit")
+    List<Payment> findRecentPaymentsByUser(@Param("userId") Long userId, @Param("limit") int limit);
+
+    // Status-based queries
     List<Payment> findByPaymentStatus(PaymentStatus paymentStatus);
     List<Payment> findByPaymentStatusInAndCreatedAtBefore(
             List<PaymentStatus> statuses, Instant createdBefore);
     List<Payment> findByPaymentStatusAndCreatedAtBefore(PaymentStatus status, Instant createdBefore);
-    boolean existsByUserIdAndPaymentStatusIn(String userId, Collection<PaymentStatus> paymentStatus);
 
-
-
-    // Provider integration queries - Essential for webhooks
+    // Provider integration queries
     Optional<Payment> findByProviderTransactionId(String providerTransactionId);
 
-    // Business intelligence queries - Great for reporting
-    @Query("SELECT COUNT(p) FROM Payment p WHERE p.userId = :userId AND p.paymentStatus = :status")
-    long countByUserIdAndStatus(@Param("userId") String userId,
-                                @Param("status") PaymentStatus status);
-
-    @Query("SELECT p FROM Payment p WHERE p.userId = :userId AND p.paymentStatus IN :successStatuses ORDER BY p.createdAt DESC")
-    List<Payment> findSuccessfulPaymentsByUserId(
-            @Param("userId") String userId,
-            @Param("successStatuses") List<PaymentStatus> successStatuses);
-
-    // Fraud detection & analytics - Very useful
+    // Fraud detection & analytics
     List<Payment> findByAmountBetweenAndPaymentStatus(
             BigDecimal minAmount, BigDecimal maxAmount, PaymentStatus status);
 
@@ -56,25 +67,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             @Param("startDate") Instant startDate,
             @Param("endDate") Instant endDate);
 
-    // Booking validation - Critical for business logic
-    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM Payment p WHERE p.bookingId = :bookingId AND p.paymentStatus IN :successStatuses")
-    boolean existsByBookingIdAndSuccessfulStatus(
-            @Param("bookingId") String bookingId,
-            @Param("successStatuses") List<PaymentStatus> successStatuses);
-
-    // Find payments by currency (useful for multi-currency platform)
+    // Currency and expiration queries
     List<Payment> findByCurrencyAndPaymentStatus(Currency currency, PaymentStatus status);
 
-    // Find expired payments for cleanup jobs
     @Query("SELECT p FROM Payment p WHERE p.expiresAt < :now AND p.paymentStatus = :status")
     List<Payment> findExpiredPayments(@Param("now") Instant now, @Param("status") PaymentStatus status);
-
-    // Get total amount by user (for spending analysis)
-    @Query("SELECT COALESCE(SUM(p.amountInUSD), 0) FROM Payment p WHERE p.userId = :userId AND p.paymentStatus IN :successStatuses")
-    BigDecimal getTotalSpentByUser(@Param("userId") String userId,
-                                   @Param("successStatuses") List<PaymentStatus> successStatuses);
-
-    // Find recent payments for a user (dashboard)
-    @Query("SELECT p FROM Payment p WHERE p.userId = :userId ORDER BY p.createdAt DESC LIMIT :limit")
-    List<Payment> findRecentPaymentsByUser(@Param("userId") String userId, @Param("limit") int limit);
 }

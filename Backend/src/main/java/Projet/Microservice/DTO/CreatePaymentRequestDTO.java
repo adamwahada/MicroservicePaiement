@@ -18,10 +18,6 @@ public class CreatePaymentRequestDTO {
     @Size(min = 1, message = "Booking ID cannot be empty")
     private String bookingId;
 
-    @NotNull(message = "User ID is required")
-    @Size(min = 1, message = "User ID cannot be empty")
-    private String userId;
-
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.01", message = "Amount must be greater than 0")
     private BigDecimal amount;

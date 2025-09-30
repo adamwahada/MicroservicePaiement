@@ -33,9 +33,6 @@ public interface RefundRepository extends JpaRepository<Refund, Long> {
     BigDecimal getTotalRefundedAmount(@Param("payment") Payment payment,
                                       @Param("status") RefundStatus status);
 
-    // Find user's refund history
-    @Query("SELECT r FROM Refund r JOIN r.payment p WHERE p.userId = :userId ORDER BY r.createdAt DESC")
-    Page<Refund> findByUserIdOrderByCreatedAtDesc(@Param("userId") String userId, Pageable pageable);
 
     // Check if payment has pending refunds
     @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END FROM Refund r WHERE r.payment = :payment AND r.refundStatus IN :pendingStatuses")

@@ -1,0 +1,177 @@
+<div class="admin-dashboard">
+  <h2>👥 Admin Dashboard - Gestion des Utilisateurs</h2>
+
+  <!-- Search and Filter -->
+  <div class="search-container" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
+
+    <!-- Search Input -->
+    <div class="search-input-container" style="flex: 1; display: flex; align-items: center; gap: 5px;">
+      <input type="text" 
+             placeholder="Rechercher par nom, email, ID ou solde..." 
+             [(ngModel)]="searchQuery" 
+             (input)="searchUsers()"
+             (keyup)="searchUsers()" 
+             style="flex: 1; padding: 5px;" />
+      <button class="btn-refresh" 
+              (click)="refreshUsers()" 
+              [disabled]="refreshing"
+              title="Rafraîchir la liste des utilisateurs">
+        <span *ngIf="!refreshing" class="refresh-icon">🔄</span>
+        <span *ngIf="refreshing" class="refresh-icon spinning">⏳</span>
+      </button>
+    </div>
+
+    <!-- Status Filter -->
+    <div class="filter-container" style="display: flex; align-items: center;">
+      <label class="filter-label">
+        <span class="filter-text">Filtrer par statut :</span>
+        <select [(ngModel)]="selectedStatus" 
+                (change)="onStatusFilterChange()"
+                class="status-filter"
+                style="margin-left: 5px; padding: 5px;">
+                <option value="all">Tous les utilisateurs</option>
+                <option value="active">Actif</option>
+                <option value="temp-banned">Ban temporaire</option>
+                <option value="permanently-banned">Ban définitif</option>
+        </select>
+      </label>
+    </div>
+
+  </div>
+
+  <!-- Active filters -->
+  <div class="active-filters" *ngIf="searchQuery || selectedStatus !== 'all'" style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 5px;">
+    <span *ngIf="searchQuery && searchQuery.trim() !== ''" class="filter-chip">
+      🔍 Recherche: "{{ searchQuery }}"
+      <button type="button" class="remove-filter" (click)="clearSearch()">✖</button>
+    </span>
+
+    <span *ngIf="selectedStatus && selectedStatus !== 'all'" class="filter-chip">
+      ⚡ Statut: {{ getStatusLabel(selectedStatus) }}
+      <button type="button" class="remove-filter" (click)="clearStatus()">✖</button>
+    </span>
+  </div>
+
+  <!-- Search results info -->
+  <div *ngIf="isSearchActive() || selectedStatus !== 'all'" class="search-results-info" style="margin-bottom: 10px; font-style: italic;">
+    {{ getSearchResultsCount() }} résultat(s) trouvé(s)
+  </div>
+
+  <!-- Users Table -->
+  <div class="users-table-container">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nom d'utilisateur</th>
+          <th>Email</th>
+          <th>Solde</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of pagedUsers" 
+            [class.row-banned]="!user.active"
+            [class.row-temp-banned]="user.active && isTemporarilyBanned(user)"
+            [class.row-active]="user.active && !isTemporarilyBanned(user)">
+          <td>{{ user.id }}</td>
+          <td style="font-size: 20px; font-weight: bold;">{{ user.username }}</td>
+          <td>{{ user.email }}</td>
+          <td><strong>{{ user.balance | currency:'EUR':'symbol':'1.2-2' }}</strong></td>
+          <td>
+            <span *ngIf="!user.active" class="inactive">Banni définitivement</span>
+            <span *ngIf="user.active && isTemporarilyBanned(user)" class="temp-banned">
+              Banni jusqu'au {{ user.bannedUntil | date:'dd/MM/yyyy' }}
+            </span>
+            <span *ngIf="user.active && !isTemporarilyBanned(user)" class="active">
+              Actif
+            </span>
+          </td>
+          <td class="actions">
+            <button mat-icon-button class="btn-icon red" (click)="openBanDropdown(user.id, undefined, $event)" matTooltip="Bannir" aria-label="Bannir">
+              <mat-icon>gavel</mat-icon>
+            </button>
+            <button mat-icon-button class="btn-icon red" (click)="openBanDropdown(user.id, null!, $event)" matTooltip="Bannir définitivement" aria-label="Bannir définitivement">
+              <mat-icon>block</mat-icon>
+            </button>
+            <button mat-icon-button class="btn-icon green" (click)="unbanUser(user.id)" matTooltip="Débannir" aria-label="Débannir">
+              <mat-icon>check_circle</mat-icon>
+            </button>
+            <!-- Modern dropdown for ban reason and days -->
+            <div *ngIf="banDropdownUserId === user.id" class="ban-dropdown-card">
+              <div class="ban-dropdown-content">
+                <label for="ban-days">Durée du bannissement :</label>
+                <select id="ban-days" [(ngModel)]="banDropdownDays" [disabled]="banDropdownDays === null">
+                  <option [ngValue]="null">Permanent</option>
+                  <option [ngValue]="1">1 jour</option>
+                  <option [ngValue]="3">3 jours</option>
+                  <option [ngValue]="7">7 jours</option>
+                </select>
+                <label for="ban-reason">Raison du bannissement :</label>
+                <select id="ban-reason" [(ngModel)]="selectedBanReason">
+                  <option [ngValue]="null">-- Sélectionner --</option>
+                  <option [ngValue]="BanCause.CHEATING">Triche</option>
+                  <option [ngValue]="BanCause.SPAM">Spam</option>
+                  <option [ngValue]="BanCause.HARASSMENT">Harcèlement</option>
+                  <option [ngValue]="BanCause.INAPPROPRIATE_CONTENT">Contenu inapproprié</option>
+                  <option [ngValue]="BanCause.MULTIPLE_ACCOUNTS">Multi-comptes</option>
+                  <option [ngValue]="BanCause.PAYMENT_FRAUD">Fraude de paiement</option>
+                  <option [ngValue]="BanCause.SECURITY_THREAT">Menace sécurité</option>
+                  <option [ngValue]="BanCause.VIOLATION_OF_RULES">Violation des règles</option>
+                  <option [ngValue]="BanCause.OTHER">Autre</option>
+                </select>
+                <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                  <button class="btn-primary" (click)="confirmBanDropdown()" [disabled]="(!banDropdownDays && banDropdownDays !== null) || !selectedBanReason">Confirmer</button>
+                  <button class="btn-secondary" (click)="closeBanDropdown()">Annuler</button>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginator -->
+  <mat-paginator
+    [length]="filteredUsers.length"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[25, 50, 100]"
+    (page)="onPageChange($event)"
+    showFirstLastButtons>
+  </mat-paginator>
+
+</div>
+
+<style>
+.ban-dropdown-card {
+  position: absolute;
+  z-index: 100;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  padding: 1rem;
+  min-width: 220px;
+  animation: fadeIn 0.2s;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ban-dropdown-content label {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+.ban-dropdown-content select {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+.ban-dropdown-content button {
+  min-width: 90px;
+}
+</style>

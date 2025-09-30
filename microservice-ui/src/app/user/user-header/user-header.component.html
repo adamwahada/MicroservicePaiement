@@ -1,0 +1,22 @@
+<div class="user-header">
+  <div class="header-content">
+    <!-- Application Name -->
+    <div class="app-title">
+      <button type="button" class="app-title-btn" (click)="navigateToGameweekList()" aria-label="Go to Gameweek List">
+        <h1>Fantasy Football</h1>
+      </button>
+    </div>
+    
+    <!-- Logout Button -->
+    <div class="header-actions">
+      <button 
+        class="logout-btn" 
+        (click)="logout()"
+        title="Logout"
+        *ngIf="isLoggedIn()">
+        <span class="logout-icon">🚪</span>
+        <span class="logout-text">Logout</span>
+      </button>
+    </div>
+  </div>
+</div>

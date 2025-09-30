@@ -7,6 +7,7 @@ import Projet.Microservice.Entities.Currency;
 import Projet.Microservice.Entities.Payment;
 import Projet.Microservice.Entities.PaymentMethod;
 import Projet.Microservice.Entities.PaymentStatus;
+import Projet.Microservice.Entities.UserEntities.UserEntity;
 import Projet.Microservice.Exceptions.BookingAlreadyPaidException;
 import Projet.Microservice.Exceptions.PaymentNotFoundException;
 import Projet.Microservice.Exceptions.PaymentStatusException;
@@ -15,6 +16,7 @@ import Projet.Microservice.Repositories.PaymentRepository;
 import Projet.Microservice.Services.PaymentProviders.PaymentProviderFactory;
 import Projet.Microservice.Services.PaymentProviders.PaymentProviderService;
 import Projet.Microservice.Services.PaymentProviders.PayPalPaymentService;
+import Projet.Microservice.Services.UserService.UserService;
 import com.paypal.orders.Order;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,26 +39,29 @@ public class PaymentService {
     private final CurrencyConversionService conversionService;
     private final PaymentProviderFactory providerFactory;
     private final PayPalPaymentService payPalPaymentService;
-
+    private final UserService userService;
 
     // CREATE a new payment
     @Transactional
     public PaymentResponseDTO createPayment(CreatePaymentRequestDTO request) {
         validateCreatePaymentRequest(request);
 
+        // Get the current authenticated user
+        UserEntity user = userService.getCurrentUser();
+
         if (paymentRepository.existsByBookingId(request.getBookingId())) {
             throw new BookingAlreadyPaidException(request.getBookingId());
         }
 
-        // Prevent creating a new payment if the user has pending/created payments
-        if (paymentRepository.existsByUserIdAndPaymentStatusIn(
-                request.getUserId(),
+        // Check for pending payments using user ID
+        if (paymentRepository.existsByUser_IdAndPaymentStatusIn(
+                user.getId(),
                 List.of(PaymentStatus.CREATED, PaymentStatus.PENDING))) {
             throw new PaymentStatusException(
                     "You already have a pending payment. Please complete it before creating a new one.");
         }
 
-        // Check if the selected payment method is available for the chosen currency
+        // Check currency availability
         List<PaymentMethod> availableMethods = providerFactory.getAvailableMethods(request.getCurrency().name());
         if (!availableMethods.contains(request.getPaymentMethod())) {
             throw new UnsupportedCurrencyException(request.getCurrency().name());
@@ -65,13 +70,13 @@ public class PaymentService {
         Payment payment = Payment.builder()
                 .paymentId(generatePaymentId())
                 .bookingId(request.getBookingId())
-                .userId(request.getUserId())
+                .user(user) // SET USER ENTITY instead of userId string
                 .amount(request.getAmount())
                 .currency(request.getCurrency())
                 .paymentMethod(request.getPaymentMethod())
                 .description(request.getDescription())
                 .paymentStatus(PaymentStatus.CREATED)
-                .expiresAt(Instant.now().plusSeconds(1800)) // 30 minutes
+                .expiresAt(Instant.now().plusSeconds(1800))
                 .amountInUSD(convertToUSD(request.getAmount(), request.getCurrency()))
                 .build();
 
@@ -80,8 +85,6 @@ public class PaymentService {
 
         return mapToResponseDTO(payment);
     }
-
-
 @Transactional
 public PaymentRedirectDTO initiatePayment(String paymentId) {
     Payment payment = paymentRepository.findByPaymentId(paymentId)
@@ -182,19 +185,20 @@ public PaymentRedirectDTO initiatePayment(String paymentId) {
     }
 
     @Transactional(readOnly = true)
-    public Page<PaymentResponseDTO> getUserPayments(String userId, Pageable pageable) {
-        Page<Payment> payments = paymentRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+    public Page<PaymentResponseDTO> getUserPayments(Pageable pageable) {
+        // Get current user's ID from UserService
+        Long userId = userService.getCurrentAppUserId();
+        Page<Payment> payments = paymentRepository.findByUser_IdOrderByCreatedAtDesc(userId, pageable);
         return payments.map(this::mapToResponseDTO);
     }
 
     // ==== Helper Methods ====
 
     private void validateCreatePaymentRequest(CreatePaymentRequestDTO request) {
+        // Remove userId validation - it comes from JWT token
+
         if (request.getBookingId() == null || request.getBookingId().trim().isEmpty()) {
             throw new IllegalArgumentException("Booking ID is required");
-        }
-        if (request.getUserId() == null || request.getUserId().trim().isEmpty()) {
-            throw new IllegalArgumentException("User ID is required");
         }
         if (request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount must be greater than zero");
@@ -221,7 +225,7 @@ public PaymentRedirectDTO initiatePayment(String paymentId) {
         return PaymentResponseDTO.builder()
                 .paymentId(payment.getPaymentId())
                 .bookingId(payment.getBookingId())
-                .userId(payment.getUserId())
+                .userId(payment.getUser().getId().toString()) // Convert to String for DTO
                 .amount(payment.getAmount())
                 .currency(payment.getCurrency())
                 .paymentMethod(payment.getPaymentMethod())

@@ -1,0 +1,19 @@
+<!-- Fixed User Layout Template -->
+<div class="user-layout">
+  <!-- Header - Fixed at top -->
+  <app-user-header></app-user-header>
+  
+  <!-- Layout Body -->
+  <div class="layout-body">
+    <!-- Sidebar Toggle Buttons -->
+  <button class="sidebar-toggle" *ngIf="!sidebarCollapsed && !sidebarHidden" (click)="cycleSidebarState()">◀</button>
+  <button class="sidebar-toggle" *ngIf="sidebarCollapsed && !sidebarHidden" (click)="cycleSidebarState()">×</button>
+  <button class="sidebar-toggle hide-btn" *ngIf="sidebarHidden" (click)="cycleSidebarState()">☰</button>
+    <!-- Sidebar: show only if not hidden -->
+  <app-user-sidebar [sidebarCollapsed]="sidebarCollapsed" *ngIf="!sidebarHidden"></app-user-sidebar>
+    <!-- Main Content -->
+    <main class="user-content" [class.collapsed]="sidebarCollapsed" [class.fullscreen]="sidebarHidden">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
