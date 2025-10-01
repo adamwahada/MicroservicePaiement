@@ -24,8 +24,8 @@ export interface CurrentUser {
 })
 export class AuthService {
   
-  private registrationApiUrl = 'http://localhost:8080/voyage/api/user';
-  private userApiUrl = 'http://localhost:8080/voyage/api/users';
+  private registrationApiUrl = 'http://localhost:8081/voyage/api/user';
+  private userApiUrl = 'http://localhost:8081/voyage/api/users';
 
   private currentUserSubject = new BehaviorSubject<CurrentUser | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
@@ -74,7 +74,7 @@ export class AuthService {
     if (currentUrl.startsWith('/admin') && roles.includes('ROLE_ADMIN')) return;
     if (currentUrl.startsWith('/user') && roles.includes('ROLE_USER')) return;
 
-    if (roles.includes('ROLE_ADMIN')) this.router.navigate(['/admin/admin-dashboard-history']);
+    if (roles.includes('ROLE_ADMIN')) this.router.navigate(['/admin/referral']);
     else if (roles.includes('ROLE_USER')) this.router.navigate(['/user/user-gameweek-list']);
     else this.router.navigate(['/unauthorized']);
   }

@@ -21,7 +21,8 @@ export class KeycloakService {
       clientId: 'angular-client'
     });
 
-    this.init();
+    // Remove this - don't call init() in constructor
+    // this.init();
     this.startTokenRefreshLoop();
   }
 
@@ -29,21 +30,26 @@ export class KeycloakService {
    * Initialize Keycloak
    */
   async init(): Promise<boolean> {
+    if (this.isInitialized) return true;
     if (this.initPromise) return this.initPromise;
 
     this.initPromise = (async () => {
       try {
-        // Always initialize Keycloak, even for "register" flow
+        console.log('🔐 Initializing Keycloak...');
+        
         const authenticated = await this.keycloak.init({ 
           onLoad: 'check-sso', 
           checkLoginIframe: false,
           pkceMethod: 'S256',
           enableLogging: true,
         });
+        
         this.isInitialized = true;
+        console.log('✅ Keycloak initialized. Authenticated:', authenticated);
+        
         return authenticated;
       } catch (error) {
-        console.error('Keycloak init failed:', error);
+        console.error('❌ Keycloak init failed:', error);
         this.isInitialized = false;
         this.initPromise = null;
         return false;
@@ -59,8 +65,10 @@ export class KeycloakService {
   async login(redirectUri?: string): Promise<void> {
     if (!this.isInitialized) await this.init();
 
+    console.log('🔑 Redirecting to Keycloak login...');
+    
     await this.keycloak.login({
-      redirectUri: redirectUri ? window.location.origin + redirectUri : window.location.origin
+      redirectUri: redirectUri || window.location.origin
     });
   }
 
@@ -68,10 +76,14 @@ export class KeycloakService {
    * Logout
    */
   logout(): void {
+    console.log('👋 Logging out...');
+    
     this.keycloak.logout({
       redirectUri: window.location.origin
     });
+    
     this.clearRoleCache();
+    this.cachedLoginStatus = null;
   }
 
   /**
@@ -79,12 +91,12 @@ export class KeycloakService {
    */
   async getValidToken(): Promise<string> {
     if (!this.isInitialized) await this.init();
+    
     try {
       await this.keycloak.updateToken(30);
       return this.keycloak.token || '';
     } catch (error) {
-      console.error('Token refresh failed, forcing login:', error);
-      await this.login();
+      console.error('❌ Token refresh failed:', error);
       throw error;
     }
   }
@@ -132,6 +144,8 @@ export class KeycloakService {
 
   // ===== ROLE METHODS =====
   getUserRoles(): string[] {
+    if (!this.isLoggedIn()) return [];
+    
     const roles = this.keycloak.tokenParsed?.['realm_access']?.['roles'] || [];
     return roles.map((r: string) => r.startsWith('ROLE_') ? r : `ROLE_${r.toUpperCase()}`);
   }
@@ -147,14 +161,19 @@ export class KeycloakService {
   isUser(): boolean { return this.hasRole('user'); }
 
   // ===== PRIVATE HELPERS =====
-  private clearRoleCache(): void { this.cachedRoles = null; }
+  private clearRoleCache(): void { 
+    this.cachedRoles = null; 
+  }
 
   private startTokenRefreshLoop(): void {
     setInterval(async () => {
-      if (!this.isInitialized) return;
+      if (!this.isInitialized || !this.isLoggedIn()) return;
+      
       try {
         await this.keycloak.updateToken(30);
-      } catch {
+        console.log('🔄 Token refreshed successfully');
+      } catch (error) {
+        console.error('❌ Token refresh failed, logging out');
         this.logout();
       }
     }, 60000); // every 60s

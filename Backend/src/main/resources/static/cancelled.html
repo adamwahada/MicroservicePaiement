@@ -363,7 +363,7 @@
                 // Check if status changed
                 if (payment.paymentStatus === 'COMPLETED') {
                     alert('Payment status has changed to COMPLETED! Redirecting to success page...');
-                    window.location.href = `/payment/success.html?paymentId=${paymentId}&status=${payment.paymentStatus}&bookingId=${payment.bookingId}`;
+                    window.location.href = `success.html`;
                 } else if (payment.paymentStatus === 'PENDING') {
                     alert('Payment is now PENDING. Please wait for completion.');
                     document.getElementById('status').textContent = 'PENDING';

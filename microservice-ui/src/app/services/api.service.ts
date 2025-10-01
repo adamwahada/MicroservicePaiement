@@ -7,7 +7,7 @@ import { catchError, tap } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = 'http://localhost:8080/voyage/api';
+  private baseUrl = 'http://localhost:8081/voyage/api';
 
   constructor(private http: HttpClient) {}
 

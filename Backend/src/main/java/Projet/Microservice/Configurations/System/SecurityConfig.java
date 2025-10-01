@@ -25,21 +25,37 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(Customizer.withDefaults())  // Enable CORS
+                .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ Important: include full context path
                         .requestMatchers(
-                                "/api/payments/**",
+                                "/api/user/register",
+                                "/voyage/api/user/register",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html",
+                                "/swagger-resources/**",
+                                "/webjars/**",
+                                "/configuration/**",
+                                "/api/users/**",
                                 "/api/user/**",
-                                ",/api/admin/**",
-                                "/api/users/**"
-
-
-
-
+                                "/assets/**",
+                                "/static/**",
+                                "/images/**",
+                                "/api/admin/**",
+                                "/api/payments/**",
+                                // ✅ Ajoutez ces patterns avec le préfixe /voyage/
+                                "/voyage/payment/**",
+                                "/voyage/success.html",
+                                "/voyage/cancelled.html",
+                                "/voyage/error.html",
+                                "/success.html/**",
+                                "/cancelled.html/**",
+                                "/error.html/**",
+                                // ✅ Permettez tous les fichiers statiques
+                                "/*.html",
+                                "/voyage/*.html"
                         ).permitAll()
-                        // All other requests must be authenticated
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
@@ -48,9 +64,6 @@ public class SecurityConfig {
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())
                         )
                 );
-
-        // Optional: Enable real-time token filter if needed
-        // http.addFilterBefore(realtimeTokenValidationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

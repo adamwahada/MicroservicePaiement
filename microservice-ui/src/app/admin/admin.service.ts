@@ -46,8 +46,8 @@ export enum UserAction {
 })
 export class AdminService {
 
-  private adminApiUrl = 'http://localhost:8080/voyage/api/admin';
-  private adminmanagerApiUrl = 'http://localhost:8080/voyage/api/admin-management';
+  private adminApiUrl = 'http://localhost:8081/voyage/api/admin';
+  private adminmanagerApiUrl = 'http://localhost:8081/voyage/api/admin-management';
 
   constructor(private http: HttpClient) { }
 

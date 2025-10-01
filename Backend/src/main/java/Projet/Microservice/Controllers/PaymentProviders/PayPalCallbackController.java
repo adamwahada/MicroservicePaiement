@@ -50,7 +50,7 @@ public class PayPalCallbackController {
             PaymentResponseDTO payment = paymentService.handlePayPalSuccess(paymentId, token, payerId);
 
             // Redirect user to static success page
-            String redirectUrl = frontendUrl + "/payment/success.html" +  // Added .html
+            String redirectUrl = frontendUrl + "/success.html" +  // Added .html
                     "?paymentId=" + paymentId +
                     "&status=" + payment.getPaymentStatus() +
                     "&bookingId=" + payment.getBookingId();
@@ -62,7 +62,7 @@ public class PayPalCallbackController {
             log.error("Error processing PayPal success callback for payment: {}", paymentId, e);
 
             // Redirect to static error page
-            String errorUrl = frontendUrl + "/payment/error.html" +  // Added .html
+            String errorUrl = frontendUrl + "/error.html" +  // Added .html
                     "?paymentId=" + paymentId +
                     "&error=" + java.net.URLEncoder.encode(e.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
 
@@ -102,7 +102,7 @@ public class PayPalCallbackController {
             PaymentResponseDTO payment = paymentService.handlePayPalCancel(paymentId);
 
             // Redirect user to frontend cancel page
-            String redirectUrl = frontendUrl + "/payment/cancelled.html" +
+            String redirectUrl = frontendUrl + "/cancelled.html" +
                     "?paymentId=" + paymentId +
                     "&bookingId=" + payment.getBookingId();
 

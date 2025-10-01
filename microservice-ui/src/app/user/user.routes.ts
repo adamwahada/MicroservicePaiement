@@ -8,6 +8,6 @@ export const userRoutes: Routes = [
     canActivate: [authGuard],
     data: { roles: ['ROLE_ADMIN', 'ROLE_USER'] },
     children: [
-      {  },
+      {path: 'landingpage', loadComponent: () => import('../landingpage/landingpage.component').then(m => m.LandingpageComponent)},
  ]}
 ];
